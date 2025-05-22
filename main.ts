@@ -2,6 +2,7 @@ import { google } from "googleapis";
 import path from "path";
 import { authenticate } from "@google-cloud/local-auth";
 import { fileURLToPath } from "url"; 
+import * as fs from 'fs'
 import { dirname } from "path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -15,14 +16,15 @@ const server = new McpServer({
 
 let driveClient: ReturnType<typeof google.drive> | null = null;
 
+// Google Auth
 const Google_auth = async () => {
 
   if (!driveClient){
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
     const auth = await authenticate({
-      keyfilePath: path.join(__dirname, 'file-auth.json'),
-      scopes: ['https://www.googleapis.com/auth/drive.readonly'],
+      keyfilePath: path.join("D:\\Projects\\Agents\\3.GDrive", 'file-auth.json'),
+      scopes: ['https://www.googleapis.com/auth/drive']
     });
   
     driveClient= google.drive({ version: "v3", auth })
@@ -30,8 +32,9 @@ const Google_auth = async () => {
   return driveClient
 };
 
+// List file drive 
 server.tool(
-  "Drive File",
+  "List_File_Drive",
   "List files from Google Drive",
   {
     pageSize: z.number().optional().default(10).describe("Number of files to list")
@@ -57,6 +60,66 @@ server.tool(
         }
       ]
     };
+  }
+);
+
+// Upload File 
+server.tool(
+  "upload_file_drive",
+  "Upload file to Google Drive",
+  {
+    file_path: z.string().describe("File folder path"),
+    file_name: z.string().describe("File name in the folder"),
+  },
+  async ({ file_path, file_name }) => {
+    const drive = await Google_auth();
+    const full_path = path.join(file_path, file_name);
+
+    if (fs.existsSync(full_path)) {
+      const fileMetadata = {
+        name: file_name,
+      };
+
+      const media = {
+        mimeType: "application/octet-stream",
+        body: fs.createReadStream(full_path),
+      };
+
+      try {
+        const res = await drive.files.create({
+          requestBody: fileMetadata,
+          media: media,
+          fields: "id",
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `File uploaded successfully.\n📁 File ID: ${res.data.id}`,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to upload file:\n${error}`,
+            },
+          ],
+        };
+      }
+    } else {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `File does not exist: ${file_name}`,
+          },
+        ],
+      };
+    }
   }
 );
 
