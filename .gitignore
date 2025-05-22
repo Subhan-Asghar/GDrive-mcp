@@ -4,5 +4,5 @@ node_modules/
 # Ignore test.ts
 test.ts
 test.js
-auth-file.json
+file-auth.json
 main.js

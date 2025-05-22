@@ -1,22 +1,35 @@
 import { google } from "googleapis";
 import path from "path";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
+import { authenticate } from "@google-cloud/local-auth";
+import { fileURLToPath } from "url"; 
+import { dirname } from "path";
 
-const server = new McpServer({
-  name: "GDrive",
-  version: "1.0.0",
-});
 
-const Google_auth = () => {
-  const auth = new google.auth.GoogleAuth({
-    keyFile: path.join(__dirname, "auth-file.json"),
-    scopes: ["https://www.googleapis.com/auth/drive"],
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const Google_auth = async () => {
+  const auth = await authenticate({
+    keyfilePath: path.join(__dirname, 'file-auth.json'),
+    scopes: ['https://www.googleapis.com/auth/drive.readonly'],
   });
 
   return google.drive({ version: "v3", auth });
+};
+
+const listFiles = async () => {
+  const drive = await Google_auth();
+
+  const res = await drive.files.list({
+    pageSize: 10,
+    fields: 'files(id, name)',
+  });
+
+  console.log("Files:");
+  res.data.files?.forEach(file => {
+    console.log(`${file.name} (${file.id})`);
+  });
   
 };
 
-
+listFiles();

@@ -1,18 +1,22 @@
 {
   "name": "gdrive",
   "version": "1.0.0",
-  "description": "",
-  "license": "ISC",
+  "description": "Google Drive file lister using Node.js and Google APIs",
   "author": "",
-  "type": "commonjs",
+  "license": "ISC",
+  "type": "module",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node main.js",
+    "build": "tsc"
   },
   "devDependencies": {
+    "@types/node": "^22.15.21",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.11.4"
+    "@google-cloud/local-auth": "^3.0.1",
+    "@modelcontextprotocol/sdk": "^1.11.4",
+    "googleapis": "^149.0.0"
   }
 }
