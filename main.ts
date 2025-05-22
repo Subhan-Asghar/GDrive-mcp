@@ -123,6 +123,53 @@ server.tool(
   }
 );
 
+// Create file 
+server.tool(
+  "create_file_drive",
+  "Create a new file on Google Drive with provided content",
+  {
+    file_name: z.string().describe("Name of the file to create"),
+    content: z.string().optional().default(" ").describe("Text content to be written in the file"),
+  },
+  async ({ file_name, content }) => {
+    const drive = await Google_auth();
+
+    const fileMetadata = {
+      name: file_name,
+    };
+
+    const media = {
+      mimeType: "application/octet-stream", 
+      body: content,
+    };
+
+    try {
+      const res = await drive.files.create({
+        requestBody: fileMetadata,
+        media: media,
+        fields: "id",
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `File created successfully.\n📁 File ID: ${res.data.id}`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Failed to create file:\n${error}`,
+          },
+        ],
+      };
+    }
+  }
+)
 
 const main =async()=>{
   const transport = new StdioServerTransport();
