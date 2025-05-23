@@ -58,10 +58,11 @@ server.tool(
   "Create a new file on Google Drive with provided content",
   {
     file_name: z.string().describe("Name of the file to create"),
-    content: z.string().optional().default(" ").describe("Text content to be written in the file"),
+    content: z.string().optional().describe("Text content to be written in the file"),
+    folder_name:z.string().optional().describe("Folder name ")
   },
-  async ({ file_name, content }) => {
-   const result:string=await create_file(file_name,content)
+  async ({ file_name, content,folder_name }) => {
+   const result:string=await create_file(file_name,content,folder_name)
    return {
     content:[
       {

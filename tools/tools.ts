@@ -50,11 +50,33 @@ export const upload_file = async (
 
 export const create_file = async (
   file_name: string,
-  content: string
+  content?: string ,
+  folder_name?:string,
 ): Promise<string> => {
   const drive = await Google_auth();
 
-  const fileMetadata = { name: file_name };
+  let parents: string[] | undefined;
+
+  if (folder_name) {
+    const res = await drive.files.list({
+      q: `name = '${folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+      fields: 'files(id)',
+      spaces: 'drive',
+    });
+
+    const folder = res.data.files?.[0];
+    if (folder) {
+      parents = [folder.id!];
+    } else {
+      return `Folder '${folder_name}' not found.`;
+    }
+  }
+
+  const fileMetadata: any = {
+    name: file_name,
+    ...(parents && { parents }),
+  };
+
   const media = {
     mimeType: "application/octet-stream",
     body: content,
@@ -67,9 +89,9 @@ export const create_file = async (
       fields: "id",
     });
 
-    return `File created successfully.\n📁 File ID: ${res.data.id}`;
-  } catch (error) {
-    return `Failed to create file:\n${error}`;
+    return `File created successfully.\n File ID: ${res.data.id}`;
+  } catch (error: any) {
+    return `Failed to create file:\n${error.message || error}`;
   }
 };
 
