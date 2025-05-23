@@ -93,3 +93,30 @@ export const delete_file = async (file_name: string) => {
     return `No file found with name : ${file_name}`;
   }
 };
+
+// Download file
+export const download_file = async (file_name: string) => {
+  const drive = await Google_auth();
+  const res = await drive.files.list({
+    q: `name='${file_name}' and trashed=false`,
+    fields: "files(id, name)",
+  });
+  const file = res.data.files;
+  if (file && file.length > 0) {
+    const fileId = file[0].id!;
+    const destpath=path.join("C:\\Users\\Subhan\\Downloads",file_name)
+    try {
+      const dest=fs.createWriteStream(destpath)
+      const response = await drive.files.get(
+        { fileId, alt: "media" },
+        { responseType: "stream" }
+      );
+      await response.data.pipe(dest)
+      return `File "${file_name}" downloaded successfully.`;
+    } catch (error) {
+      return `Failed to download file: ${error}`;
+    }
+  } else {
+    return `No file found with name : ${file_name}`;
+  }
+};

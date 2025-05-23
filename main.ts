@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { list_files,upload_file,create_file,
-  delete_file } from "./tools/tools.js";
+  delete_file,download_file } from "./tools/tools.js";
 
 const server = new McpServer({
   name: "GDrive",
@@ -93,6 +93,25 @@ server.tool(
   }
 )
 
+// Download file from drive 
+server.tool(
+  "download_file_drive",
+  "Download files from google drive ",
+  {
+    file_name:z.string().describe("Name of the file ")
+  },
+  async({file_name})=>{
+    const result=await download_file(file_name)
+    return {
+      content:[
+        {
+          type:"text",
+          text:result
+        }
+      ]
+    }
+  }
+)
 
 // Main 
 const main =async()=>{
