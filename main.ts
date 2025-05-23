@@ -1,7 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { list_files,upload_file,create_file } from "./tools/tools.js";
+import { list_files,upload_file,create_file,
+  delete_file } from "./tools/tools.js";
 
 const server = new McpServer({
   name: "GDrive",
@@ -72,6 +73,28 @@ server.tool(
   }
 )
 
+// Delete file from drive 
+server.tool(
+  "Delete_file_drive",
+  "Delete file from the google drive ",
+  {
+    file_name:z.string().describe("name of the file")
+  },
+  async({file_name})=>{
+    const result= await delete_file(file_name)
+    return{
+      content:[
+        {
+          type:"text",
+          text:result
+        }
+      ]
+    }
+  }
+)
+
+
+// Main 
 const main =async()=>{
   const transport = new StdioServerTransport();
   await server.connect(transport);
