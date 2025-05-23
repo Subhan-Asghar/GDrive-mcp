@@ -142,3 +142,41 @@ export const download_file = async (file_name: string) => {
     return `No file found with name : ${file_name}`;
   }
 };
+
+// Create Folder
+export const create_folder = async (folder_name: string,in_folder?:string) => {
+  const drive = await Google_auth();
+
+  let parents: string[] | undefined;
+
+  if (in_folder) {
+    const res = await drive.files.list({
+      q: `name = '${in_folder}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+      fields: 'files(id)',
+      spaces: 'drive',
+    });
+
+    const folder = res.data.files?.[0];
+    if (folder) {
+      parents = [folder.id!];
+    } else {
+      return `Folder '${in_folder}' not found.`;
+    }
+  }
+  const folderMetadata: any = {
+    name: folder_name,
+    mimeType: 'application/vnd.google-apps.folder',
+    ...(parents && { parents }),
+  };
+
+  try {
+    const res = await drive.files.create({
+      requestBody: folderMetadata,
+      fields: 'id',
+    });
+
+    return `Folder created successfully.\nFolder : ${folder_name}`;
+  } catch (error: any) {
+    return `Failed to create folder:\n${error.message || error}`;
+  }
+}

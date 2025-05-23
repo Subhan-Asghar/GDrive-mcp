@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { list_files,upload_file,create_file,
-  delete_file,download_file } from "./tools/tools.js";
+  delete_file,download_file,create_folder } from "./tools/tools.js";
 
 const server = new McpServer({
   name: "GDrive",
@@ -114,6 +114,26 @@ server.tool(
   }
 )
 
+// Create Folder
+server.tool(
+  "create_folder_drive",
+  "Create folder in google drive",
+  {
+    folder_name:z.string().describe("Name of the folder"),
+    in_folder:z.string().optional().describe("In which folder create the folder")
+  },
+  async({folder_name,in_folder})=>{
+    const result =await create_folder(folder_name,in_folder)
+    return{
+      content:[
+        {
+          type:"text",
+          text:result
+        }
+      ]
+    }
+  }
+)
 // Main 
 const main =async()=>{
   const transport = new StdioServerTransport();
