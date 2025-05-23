@@ -1,36 +1,13 @@
-import { google } from "googleapis";
-import path from "path";
-import { authenticate } from "@google-cloud/local-auth";
-import { fileURLToPath } from "url"; 
-import * as fs from 'fs'
-import { dirname } from "path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { list_files,upload_file,create_file } from "./tools/tools.js";
 
 const server = new McpServer({
   name: "GDrive",
   version: "1.0.0"
 });
 
-
-let driveClient: ReturnType<typeof google.drive> | null = null;
-
-// Google Auth
-const Google_auth = async () => {
-
-  if (!driveClient){
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
-    const auth = await authenticate({
-      keyfilePath: path.join("D:\\Projects\\Agents\\3.GDrive", 'file-auth.json'),
-      scopes: ['https://www.googleapis.com/auth/drive']
-    });
-  
-    driveClient= google.drive({ version: "v3", auth })
-  }
-  return driveClient
-};
 
 // List file drive 
 server.tool(
@@ -40,23 +17,13 @@ server.tool(
     pageSize: z.number().optional().default(10).describe("Number of files to list")
   },
   async ({ pageSize }) => {
-    const drive = await Google_auth();
-
-    const res = await drive.files.list({
-      pageSize: pageSize,
-      fields: 'files(id, name)',
-    });
-
-    let filesList = "Files:\n";
-    res.data.files?.forEach(file => {
-      filesList += `${file.name} (${file.id})\n`;
-    });
+    const result: string = await list_files(pageSize);
     
     return {
       content: [
         {
           type: "text",
-          text: filesList
+          text: result
         }
       ]
     };
@@ -72,54 +39,15 @@ server.tool(
     file_name: z.string().describe("File name in the folder"),
   },
   async ({ file_path, file_name }) => {
-    const drive = await Google_auth();
-    const full_path = path.join(file_path, file_name);
-
-    if (fs.existsSync(full_path)) {
-      const fileMetadata = {
-        name: file_name,
-      };
-
-      const media = {
-        mimeType: "application/octet-stream",
-        body: fs.createReadStream(full_path),
-      };
-
-      try {
-        const res = await drive.files.create({
-          requestBody: fileMetadata,
-          media: media,
-          fields: "id",
-        });
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `File uploaded successfully.\n📁 File ID: ${res.data.id}`,
-            },
-          ],
-        };
-      } catch (error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Failed to upload file:\n${error}`,
-            },
-          ],
-        };
+   const result:string=await upload_file(file_path,file_name)
+   return {
+    content:[
+      {
+        type:"text",
+        text:result
       }
-    } else {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `File does not exist: ${file_name}`,
-          },
-        ],
-      };
-    }
+    ]
+   }
   }
 );
 
@@ -132,42 +60,15 @@ server.tool(
     content: z.string().optional().default(" ").describe("Text content to be written in the file"),
   },
   async ({ file_name, content }) => {
-    const drive = await Google_auth();
-
-    const fileMetadata = {
-      name: file_name,
-    };
-
-    const media = {
-      mimeType: "application/octet-stream", 
-      body: content,
-    };
-
-    try {
-      const res = await drive.files.create({
-        requestBody: fileMetadata,
-        media: media,
-        fields: "id",
-      });
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `File created successfully.\n📁 File ID: ${res.data.id}`,
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Failed to create file:\n${error}`,
-          },
-        ],
-      };
-    }
+   const result:string=await create_file(file_name,content)
+   return {
+    content:[
+      {
+        type:"text",
+        text:result
+      }
+    ]
+   } 
   }
 )
 

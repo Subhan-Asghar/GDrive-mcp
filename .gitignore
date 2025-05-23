@@ -1,8 +1,10 @@
 # Ignore node_modules
 node_modules/
 
-# Ignore test.ts
+
 test.ts
 test.js
 file-auth.json
 main.js
+auth.js
+tools.js
