@@ -180,3 +180,27 @@ export const create_folder = async (folder_name: string,in_folder?:string) => {
     return `Failed to create folder:\n${error.message || error}`;
   }
 }
+
+// Delete Folder
+export const delete_folder = async (folder_name: string): Promise<string> => {
+  const drive = await Google_auth();
+
+  const res = await drive.files.list({
+    q: `name = '${folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+    fields: 'files(id)',
+    spaces: 'drive',
+  });
+
+  const files = res.data.files;
+  if (files && files.length > 0) {
+    const fileId = files[0].id!;
+    try {
+      await drive.files.delete({ fileId });
+      return `Folder "${folder_name}" deleted successfully.`;
+    } catch (error: any) {
+      return `Failed to delete folder:\n${error.message || error}`;
+    }
+  } else {
+    return `No Folder found with name: ${folder_name}`;
+  }
+};
