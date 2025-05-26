@@ -39,7 +39,7 @@ export const upload_file = async (
         fields: "id",
       });
 
-      return `File uploaded successfully.\n📁 File ID: ${res.data.id}`;
+      return `File uploaded successfully.\nFile ID: ${res.data.id}`;
     } catch (error) {
       return `Failed to upload file:\n${error}`;
     }
@@ -204,3 +204,31 @@ export const delete_folder = async (folder_name: string): Promise<string> => {
     return `No Folder found with name: ${folder_name}`;
   }
 };
+
+// Share file with anyone
+export const share_file_anyone = async (file_name: string): Promise<string> => {
+  try {
+    const drive = await Google_auth();
+
+    const { data } = await drive.files.list({
+      q: `name='${file_name}' and trashed=false`,
+      fields: 'files(id, name)',
+    });
+
+    const file = data.files?.[0];
+    if (!file || !file.id) {
+      return `File not found: ${file_name}`;
+    }
+
+    await drive.permissions.create({
+      fileId: file.id,
+      requestBody: { role: 'reader', type: 'anyone' },
+    });
+
+    return `File shared successfully: ${file_name}`;
+  } catch (error: any) {
+    console.error('Error sharing file:', error.message);
+    return ` Failed to share file: ${file_name}`;
+  }
+};
+
