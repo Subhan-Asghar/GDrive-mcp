@@ -3,7 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { list_files,upload_file,create_file,
   delete_file,download_file,create_folder ,
-  delete_folder,share_file_anyone} from "./tools/tools.js";
+  delete_folder,share_file_anyone,share_file} from "./tools/tools.js";
 
 const server = new McpServer({
   name: "GDrive",
@@ -166,6 +166,28 @@ server.tool(
   async({file_name})=>{
     const result= await share_file_anyone(file_name)
     return {
+      content:[
+        {
+          type:"text",
+          text:result
+        }
+      ]
+    }
+  }
+)
+
+// Share file
+server.tool(
+  "share_file",
+  "Share files with a specific person",
+  {
+    file_name:z.string(),
+    emails:z.array(z.string()),
+    role:z.string().default("reader")
+  },
+  async({file_name,emails,role})=>{
+    const result =await share_file(file_name,emails,role)
+    return{
       content:[
         {
           type:"text",

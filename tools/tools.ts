@@ -232,3 +232,37 @@ export const share_file_anyone = async (file_name: string): Promise<string> => {
   }
 };
 
+// Share File 
+export const share_file = async (file_name: string,emails:string[],role:string="reader"): Promise<string> => {
+  try {
+    const drive = await Google_auth();
+
+    const { data } = await drive.files.list({
+      q: `name='${file_name}' and trashed=false`,
+      fields: 'files(id, name)',
+    });
+
+    const file = data.files?.[0];
+    if (!file || !file.id) {
+      return `File not found: ${file_name}`;
+    }
+
+    for (const email of emails) {
+      await drive.permissions.create({
+        fileId: file.id,
+        requestBody: {
+          type: 'user',
+          role: role, 
+          emailAddress: email,
+        },
+        sendNotificationEmail: true,
+      });
+    }
+
+    return `File shared with ${emails.length} users successfully.`;
+  } catch (error: any) {
+    console.error('Error sharing file:', error.message);
+    return `Failed to share file with users.`;
+  }
+};
+
