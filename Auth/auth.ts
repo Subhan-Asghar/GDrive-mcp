@@ -15,7 +15,7 @@ export const Google_auth = async () => {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
     const auth = await authenticate({
-      keyfilePath: path.join(__dirname, 'file-auth.json'),
+      keyfilePath: path.join(__dirname, 'credentials.json'),
       scopes: ['https://www.googleapis.com/auth/drive']
     });
   
